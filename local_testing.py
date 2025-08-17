@@ -68,7 +68,7 @@ def get_table_contour(frame):
         approx = cv2.convexHull(largest_contour)
 
     return approx
-    
+
 
 videoPath = "videos/fh_bh_testvid.MOV"
 
@@ -106,7 +106,16 @@ while True:
             x1, y1, x2, y2 = map(int, [x1, y1, x2, y2])
             cv2.rectangle(display_frame, (x1, y1), (x2, y2), (255, 0, 0), 3)
             cv2.putText(display_frame, "Ball", (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 5, (255, 0, 0), 5)
-
+            # get paddle coordinates
+            for paddle in paddle_tracking_results[0].boxes.data:
+                paddle_x1, paddle_y1, paddle_x2, paddle_y2, conf, cls = paddle.tolist()
+                paddle_x1, paddle_y1, paddle_x2, paddle_y2 = map(int, [paddle_x1, paddle_y1, paddle_x2, paddle_y2])
+                # if the ball is within the paddle's x coordinates
+                if paddle_x1 < x2 and paddle_x2 > x1 and paddle_y1 < y2 and paddle_y2 > y1:
+                    # Ball is within paddle area
+                    print("HITTTTTT")
+                    # red colour
+                    cv2.putText(display_frame, "Hit!", (100, 700), cv2.FONT_HERSHEY_SIMPLEX, 5, (0, 0, 255), 5)
 
     for obj in paddle_tracking_results[0].boxes.data:
         x1, y1, x2, y2, conf, cls = obj.tolist()
