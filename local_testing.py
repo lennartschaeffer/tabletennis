@@ -29,6 +29,57 @@ transform = transforms.Compose([
 """
 opencv stuff
 """
+def get_table_contour(frame):
+    hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+
+    # --- Mask for green table surface ---
+    lower_green = (35, 40, 40)
+    upper_green = (85, 255, 255)
+    mask_green = cv2.inRange(hsv, lower_green, upper_green) # type: ignore
+
+    # --- Mask for white lines ---
+    lower_white = (0, 0, 200)
+    upper_white = (180, 40, 255)
+    mask_white = cv2.inRange(hsv, lower_white, upper_white) # type: ignore
+
+    # Combine both
+    mask = cv2.bitwise_or(mask_green, mask_white)
+
+    # Morphological closing to bridge over white gaps
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (15, 15))
+    mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
+
+    # Find contours
+    contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    if not contours:
+        return None
+
+    # Take largest contour
+    largest_contour = max(contours, key=cv2.contourArea)
+
+    # Approximate contour to polygon
+    epsilon = 0.02 * cv2.arcLength(largest_contour, True)
+    approx = cv2.approxPolyDP(largest_contour, epsilon, True)
+
+    # If it's not a quadrilateral, take convex hull to clean up
+    if len(approx) != 4:
+        approx = cv2.convexHull(largest_contour)
+
+    return approx
+    
+
+def get_table_bbox(frame):
+    hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+    # colour = hsv[2870, 10]
+    lower_green = (35, 40, 40)
+    upper_green = (85, 255, 255)
+    mask = cv2.inRange(hsv, lower_green, upper_green) # type: ignore
+    contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    if contours:
+        largest_contour = max(contours, key=cv2.contourArea)
+        x, y, w, h = cv2.boundingRect(largest_contour)
+        return x, y, x + w, y + h
+    return None
 
 videoPath = "videos/fh_bh_testvid.MOV"
 
@@ -47,6 +98,17 @@ while True:
 
     results = yolo_model(frame)
     display_frame = frame.copy()
+    
+    # table_bbox = get_table_bbox(frame)
+    # if table_bbox:
+    #     x1, y1, x2, y2 = table_bbox
+    #     cv2.rectangle(display_frame, (x1, y1), (x2, y2), (0, 255, 0), 3)
+
+    if frame_count == 0:
+        table_contour = get_table_contour(frame)
+        
+    if table_contour is not None:
+        cv2.drawContours(display_frame, [table_contour], -1, (0, 255, 0), 3)
 
     """
     the light above my head is being detected as a ball lol, so anything with a y coord
@@ -59,9 +121,7 @@ while True:
             cv2.rectangle(display_frame, (x1, y1), (x2, y2), (255, 0, 0), 3)
             cv2.putText(display_frame, "Ball", (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 5, (255, 0, 0), 5)
 
-        
-
-    if frame_count % 50 == 0:  # every 10th frame
+    if frame_count % 50 == 0:  # every 50th frame
         # Convert OpenCV BGR -> RGB for model
         frame_rgb = cv2.cvtColor(display_frame, cv2.COLOR_BGR2RGB)
         # Convert NumPy array to PIL Image
@@ -109,3 +169,4 @@ while True:
 
 vidcap.release()
 cv2.destroyAllWindows()
+
