@@ -29,15 +29,16 @@ transform = transforms.Compose([
 """
 opencv stuff
 """
+
 def get_table_contour(frame):
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
-    # --- Mask for green table surface ---
+    # green table surface
     lower_green = (35, 40, 40)
     upper_green = (85, 255, 255)
     mask_green = cv2.inRange(hsv, lower_green, upper_green) # type: ignore
 
-    # --- Mask for white lines ---
+    # white lines 
     lower_white = (0, 0, 200)
     upper_white = (180, 40, 255)
     mask_white = cv2.inRange(hsv, lower_white, upper_white) # type: ignore
@@ -68,19 +69,6 @@ def get_table_contour(frame):
     return approx
     
 
-def get_table_bbox(frame):
-    hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-    # colour = hsv[2870, 10]
-    lower_green = (35, 40, 40)
-    upper_green = (85, 255, 255)
-    mask = cv2.inRange(hsv, lower_green, upper_green) # type: ignore
-    contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    if contours:
-        largest_contour = max(contours, key=cv2.contourArea)
-        x, y, w, h = cv2.boundingRect(largest_contour)
-        return x, y, x + w, y + h
-    return None
-
 videoPath = "videos/fh_bh_testvid.MOV"
 
 vidcap = cv2.VideoCapture(videoPath)
@@ -99,11 +87,6 @@ while True:
     results = yolo_model(frame)
     display_frame = frame.copy()
     
-    # table_bbox = get_table_bbox(frame)
-    # if table_bbox:
-    #     x1, y1, x2, y2 = table_bbox
-    #     cv2.rectangle(display_frame, (x1, y1), (x2, y2), (0, 255, 0), 3)
-
     if frame_count == 0:
         table_contour = get_table_contour(frame)
         
