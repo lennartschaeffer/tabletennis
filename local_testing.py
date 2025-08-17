@@ -6,8 +6,9 @@ from PIL import Image
 import cv2
 from ultralytics import YOLO
 
-# YOLO model
-yolo_model = YOLO("models/best_balltracking.pt")
+# YOLO models
+ball_tracking_model = YOLO("models/best_balltracking.pt")
+paddle_tracking_model = YOLO("models/best_paddle.pt")
 
 # Recreate the model architecture
 model = models.resnet18(weights=None)
@@ -84,7 +85,9 @@ while True:
     if not success:
         break
 
-    results = yolo_model(frame)
+    ball_tracking_results = ball_tracking_model(frame)
+    paddle_tracking_results = paddle_tracking_model(frame)
+    
     display_frame = frame.copy()
     
     if frame_count == 0:
@@ -97,12 +100,19 @@ while True:
     the light above my head is being detected as a ball lol, so anything with a y coord
     less than 1000 is probably the light so we want to ignore that
     """
-    for obj in results[0].boxes.data:
+    for obj in ball_tracking_results[0].boxes.data:
         x1, y1, x2, y2, conf, cls = obj.tolist()
         if y1 >= 1000 and y2 >= 1000:
             x1, y1, x2, y2 = map(int, [x1, y1, x2, y2])
             cv2.rectangle(display_frame, (x1, y1), (x2, y2), (255, 0, 0), 3)
             cv2.putText(display_frame, "Ball", (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 5, (255, 0, 0), 5)
+
+
+    for obj in paddle_tracking_results[0].boxes.data:
+        x1, y1, x2, y2, conf, cls = obj.tolist()
+        x1, y1, x2, y2 = map(int, [x1, y1, x2, y2])
+        cv2.rectangle(display_frame, (x1, y1), (x2, y2), (0, 255, 0), 3)
+        cv2.putText(display_frame, "Paddle", (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 5, (0, 255, 0), 5)
 
     if frame_count % 50 == 0:  # every 50th frame
         # Convert OpenCV BGR -> RGB for model
