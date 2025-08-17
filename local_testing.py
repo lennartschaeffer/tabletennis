@@ -46,8 +46,20 @@ while True:
         break
 
     results = yolo_model(frame)
-    annotated_frame = results[0].plot()  # Get annotated frame from YOLO results
-    display_frame = annotated_frame
+    display_frame = frame.copy()
+
+    """
+    the light above my head is being detected as a ball lol, so anything with a y coord
+    less than 1000 is probably the light so we want to ignore that
+    """
+    for obj in results[0].boxes.data:
+        x1, y1, x2, y2, conf, cls = obj.tolist()
+        if y1 >= 1000 and y2 >= 1000:
+            x1, y1, x2, y2 = map(int, [x1, y1, x2, y2])
+            cv2.rectangle(display_frame, (x1, y1), (x2, y2), (255, 0, 0), 3)
+            cv2.putText(display_frame, "Ball", (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 5, (255, 0, 0), 5)
+
+        
 
     if frame_count % 50 == 0:  # every 10th frame
         # Convert OpenCV BGR -> RGB for model
