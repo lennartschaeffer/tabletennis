@@ -79,6 +79,8 @@ bh_count = 0
 text_to_display = ""
 display_frames_counter = 0
 frames_for_display = 10 # Display for 10 frames
+hit_count = 0
+hit_recently = False  # Add this flag
 
 while True:
     success, frame = vidcap.read()
@@ -96,27 +98,33 @@ while True:
     if table_contour is not None:
         cv2.drawContours(display_frame, [table_contour], -1, (0, 255, 0), 3)
 
+    hit_this_frame = False
     """
     the light above my head is being detected as a ball lol, so anything with a y coord
     less than 1000 is probably the light so we want to ignore that
     """
-    for obj in ball_tracking_results[0].boxes.data:
+    for i,obj in enumerate(ball_tracking_results[0].boxes.data):
         x1, y1, x2, y2, conf, cls = obj.tolist()
         if y1 >= 1000 and y2 >= 1000:
             x1, y1, x2, y2 = map(int, [x1, y1, x2, y2])
             cv2.rectangle(display_frame, (x1, y1), (x2, y2), (255, 0, 0), 3)
             cv2.putText(display_frame, "Ball", (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 5, (255, 0, 0), 5)
             # get paddle coordinates
-            for paddle in paddle_tracking_results[0].boxes.data:
+            for i, paddle in enumerate(paddle_tracking_results[0].boxes.data):
                 paddle_x1, paddle_y1, paddle_x2, paddle_y2, conf, cls = paddle.tolist()
                 paddle_x1, paddle_y1, paddle_x2, paddle_y2 = map(int, [paddle_x1, paddle_y1, paddle_x2, paddle_y2])
                 # if the ball is within the paddle's x coordinates
                 if paddle_x1 < x2 and paddle_x2 > x1 and paddle_y1 < y2 and paddle_y2 > y1:
                     # Ball is within paddle area
-                    print("HITTTTTT")
-                    # red colour
-                    cv2.putText(display_frame, "Hit!", (100, 700), cv2.FONT_HERSHEY_SIMPLEX, 5, (0, 0, 255), 5)
+                    hit_this_frame = True
 
+    if hit_this_frame and not hit_recently:
+        cv2.putText(display_frame, "Hit!", (100, 700), cv2.FONT_HERSHEY_SIMPLEX, 5, (0, 0, 255), 5)
+        hit_count += 1
+        hit_recently = True
+    elif not hit_this_frame:
+        hit_recently = False
+        
     for obj in paddle_tracking_results[0].boxes.data:
         x1, y1, x2, y2, conf, cls = obj.tolist()
         x1, y1, x2, y2 = map(int, [x1, y1, x2, y2])
@@ -159,6 +167,7 @@ while True:
     # Display counts
     cv2.putText(display_frame, f"Forehand: {fh_count}", (100, 400), cv2.FONT_HERSHEY_SIMPLEX, 4, (0, 255, 0), 5)
     cv2.putText(display_frame, f"Backhand: {bh_count}", (100, 500), cv2.FONT_HERSHEY_SIMPLEX, 4, (0, 255, 0), 5)
+    cv2.putText(display_frame, f"Hits: {hit_count}", (300, 600), cv2.FONT_HERSHEY_SIMPLEX, 4, (0, 255, 0), 5)
     
     # Display frame
     cv2.imshow('Table Tennis Stroke Classification', display_frame)
