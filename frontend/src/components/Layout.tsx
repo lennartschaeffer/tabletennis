@@ -1,4 +1,4 @@
-import { AppShell, Stack, Title, Text, Flex, Button } from "@mantine/core";
+import { AppShell, Stack, Title, Flex, Button } from "@mantine/core";
 import React from "react";
 import { FaTableTennis } from "react-icons/fa";
 import { Link, useLocation } from "react-router-dom";
