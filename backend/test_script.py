@@ -7,15 +7,15 @@ import cv2
 from ultralytics import YOLO
 
 # YOLO models
-ball_tracking_model = YOLO("models/best_balltracking.pt")
-paddle_tracking_model = YOLO("models/best_paddle.pt")
+ball_tracking_model = YOLO("./models/best_balltracking.pt")
+paddle_tracking_model = YOLO("./models/best_paddle.pt")
 
 # Recreate the model architecture
 model = models.resnet18(weights=None)
 num_features = model.fc.in_features
 model.fc = nn.Linear(num_features, 2)  # 2 classes: forehand/backhand
 
-model.load_state_dict(torch.load("models/forehand_backhand_model.pth", map_location=torch.device('cpu')))
+model.load_state_dict(torch.load("./models/forehand_backhand_model.pth", map_location=torch.device('cpu')))
 model.eval()  # set to inference mode
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -70,7 +70,7 @@ def get_table_contour(frame):
     return approx
 
 
-videoPath = "videos/fh_bh_testvid.MOV"
+videoPath = "./videos/fh_bh_testvid.MOV"
 
 vidcap = cv2.VideoCapture(videoPath)
 frame_count = 0
