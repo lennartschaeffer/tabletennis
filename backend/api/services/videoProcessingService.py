@@ -7,7 +7,6 @@ import cv2
 from ultralytics import YOLO
 import os
 
-# Get the base directory
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MODEL_DIR = os.path.join(BASE_DIR, "../models")
 
@@ -37,7 +36,6 @@ transform = transforms.Compose([
 
 
 def process_video(video_path):
-    """Process a table tennis video and return statistics"""
     vidcap = cv2.VideoCapture(video_path)
     frame_count = 0
     fh_count = 0
@@ -56,7 +54,10 @@ def process_video(video_path):
         
         hit_this_frame = False
 
-        # Check for ball hits
+        """
+        the light above my head is being detected as a ball lol, so anything with a y coord
+        less than 1000 is probably the light so we want to ignore that
+        """
         for obj in ball_tracking_results[0].boxes.data:
             x1, y1, x2, y2, conf, cls = obj.tolist()
             if y1 >= 1000 and y2 >= 1000:  # Filter out lights detected as balls

@@ -4,7 +4,7 @@ import os
 import tempfile
 import uuid
 
-from backend.api.services.videoProcessingService import process_video
+from services.videoProcessingService import process_video
 
 app = FastAPI(title="Table Tennis Analysis API")
 

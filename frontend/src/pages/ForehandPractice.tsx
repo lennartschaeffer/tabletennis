@@ -17,9 +17,18 @@ const ForehandPractice = () => {
   const handleSubmit = async () => {
     if (!file) return;
 
-    setUploading(true);
+    const formData = new FormData();
+    formData.append("video", file);
 
     try {
+      setUploading(true);
+      const response = await fetch("http://localhost:8000/analyze-video", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await response.json();
+      console.log(data);
+      setResults(data);
     } catch (error) {
       console.error("Error uploading video:", error);
     } finally {
